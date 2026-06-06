@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Picker Complaints</title>
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap');
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+:root {
+  --bg:#0a0e1a;
+  --card:#111827;
+  --accent:#3b82f6;
+  --text:#f1f5f9;
+  --muted:#94a3b8;
+  --border:#1e293b;
+  --red:#ef4444;
+  --green:#22c55e;
+}
+
+body {
+  font-family:'Cairo',sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  min-height:100vh;
+}
+
+.header {
+  padding:20px;
+  text-align:center;
+  border-bottom:1px solid var(--border);
+}
+.header h1 { font-size:20px; }
+
+.search-section { padding:20px; }
+
+.search-input {
+  width:100%;
+  padding:14px;
+  border-radius:10px;
+  border:1px solid var(--border);
+  background:var(--card);
+  color:white;
+  text-align:center;
+  font-size:18px;
+  font-family:'Cairo',sans-serif;
+}
+
+.search-btn {
+  margin-top:10px;
+  width:100%;
+  padding:12px;
+  background:var(--accent);
+  border:none;
+  color:white;
+  font-size:18px;
+  border-radius:10px;
+  font-family:'Cairo',sans-serif;
+  cursor:pointer;
+}
+
+.search-btn:disabled {
+  opacity:0.6;
+  cursor:not-allowed;
+}
+
+.profile-card {
+  margin:16px;
+  padding:16px;
+  background:var(--card);
+  border-radius:12px;
+  display:none;
+}
+
+.picker-name {
+  font-size:18px;
+  font-weight:700;
+  margin-bottom:12px;
+  text-align:center;
+}
+
+.stat-box {
+  padding:14px;
+  text-align:center;
+  border-radius:10px;
+  background:#0f172a;
+}
+
+.stat-box .num {
+  font-size:26px;
+  font-weight:900;
+  color:var(--accent);
+}
+
+.issue-row {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:10px 14px;
+  background:#0f172a;
+  margin:6px 16px;
+  border-radius:10px;
+  gap:10px;
+}
+
+.issue-detail { flex:1; }
+
+.issue-count {
+  color:var(--green);
+  font-weight:700;
+  white-space:nowrap;
+}
+
+.error-msg {
+  margin:16px;
+  padding:14px;
+  background:#1e0a0a;
+  border:1px solid var(--red);
+  border-radius:10px;
+  color:var(--red);
+  text-align:center;
+  display:none;
+}
+
+.loading-msg {
+  margin:16px;
+  padding:14px;
+  text-align:center;
+  color:var(--muted);
+  display:none;
+}
+
+.section-title {
+  padding:0 16px;
+  margin:12px 0 6px;
+  font-size:14px;
+  color:var(--muted);
+}
+</style>
+</head>
+
+<body>
+
+<div class="header">
+  <h1>📦 Picker Performance</h1>
+</div>
+
+<div class="search-section">
+  <input id="hridInput" class="search-input" placeholder="Enter HRID" onkeydown="handleKey(event)">
+  <button id="searchBtn" class="search-btn" onclick="search()">🔍 Search</button>
+</div>
+
+<div id="loadingMsg" class="loading-msg">⏳ جاري التحميل...</div>
+<div id="errorMsg" class="error-msg"></div>
+
+<div id="profileCard" class="profile-card">
+  <div id="pickerName" class="picker-name"></div>
+  <div class="stat-box">
+    <div id="totalCount" class="num">0</div>
+    <div>Valid Complaints</div>
+  </div>
+</div>
+
+<div id="sectionTitle" class="section-title" style="display:none">Top Complaints</div>
+<div id="issuesList"></div>
+
+<script>
+
+const API_URL = "https://script.google.com/macros/s/AKfycbzotisqJTAvKQe4CyXcwFrffIMIs8Mgubp7qX2-9p5VtU58Rn3wOKPH9MRgrcHBhcP18Q/exec";
+
+function handleKey(e) {
+  if (e.key === 'Enter') search();
+}
+
+function setLoading(on) {
+  document.getElementById('searchBtn').disabled = on;
+  document.getElementById('loadingMsg').style.display = on ? 'block' : 'none';
+  document.getElementById('searchBtn').innerText = on ? '⏳ جاري البحث...' : '🔍 Search';
+}
+
+function showError(msg) {
+  const el = document.getElementById('errorMsg');
+  el.innerText = msg;
+  el.style.display = 'block';
+}
+
+function clearError() {
+  document.getElementById('errorMsg').style.display = 'none';
+}
+
+function search() {
+  const hrid = document.getElementById('hridInput').value.trim();
+
+  if (!hrid) {
+    showError('من فضلك ادخل HRID');
+    return;
+  }
+
+  clearError();
+  document.getElementById('profileCard').style.display = 'none';
+  document.getElementById('issuesList').innerHTML = '';
+  document.getElementById('sectionTitle').style.display = 'none';
+  setLoading(true);
+
+  const callbackName = 'cb_' + Date.now();
+
+  window[callbackName] = function(picker) {
+    setLoading(false);
+    delete window[callbackName];
+    const old = document.getElementById('jsonp_script');
+    if (old) old.remove();
+
+    if (!picker) {
+      showError('❌ مفيش داتا لهذا الـ HRID');
+      return;
+    }
+
+    renderProfile(picker);
+    renderIssues(picker.complaints);
+  };
+
+  const script = document.createElement('script');
+  script.id = 'jsonp_script';
+  script.src = API_URL + '?hrid=' + encodeURIComponent(hrid) + '&callback=' + callbackName;
+  script.onerror = function() {
+    setLoading(false);
+    showError('❌ حصل خطأ في التحميل، حاول تاني');
+    delete window[callbackName];
+  };
+
+  document.body.appendChild(script);
+}
+
+function renderProfile(picker) {
+  document.getElementById('profileCard').style.display = 'block';
+  document.getElementById('pickerName').innerText = '👤 ' + (picker.name || 'Unknown');
+  document.getElementById('totalCount').innerText = picker.total;
+}
+
+function renderIssues(complaints) {
+  if (!complaints || complaints.length === 0) return;
+
+  const sorted = [...complaints].sort((a, b) => b.count - a.count).slice(0, 5);
+
+  document.getElementById('sectionTitle').style.display = 'block';
+
+  const list = document.getElementById('issuesList');
+  list.innerHTML = '';
+
+  sorted.forEach(c => {
+    list.innerHTML += `
+      <div class="issue-row">
+        <div class="issue-detail">${c.detail}</div>
+        <div class="issue-count">${c.count}x</div>
+      </div>
+    `;
+  });
+}
+
+</script>
+</body>
+</html>
