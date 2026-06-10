@@ -2,172 +2,295 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>بيانات الشكاوى</title>
-
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Picker Performance</title>
 <style>
-*{
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
-    font-family:Tahoma,sans-serif;
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap');
+* { margin:0; padding:0; box-sizing:border-box; }
+:root {
+  --bg:#0a0e1a; --card:#111827; --accent:#b5008e; --accent2:#d400a8;
+  --text:#f1f5f9; --muted:#94a3b8; --border:#1e293b;
+  --red:#ef4444; --green:#22c55e; --orange:#f59e0b;
 }
-
-body{
-    background:#f4f6f9;
-    padding:20px;
-}
-
-.container{
-    max-width:1200px;
-    margin:auto;
-}
-
-h1{
-    text-align:center;
-    margin-bottom:20px;
-    color:#333;
-}
-
-.card{
-    background:white;
-    border-radius:12px;
-    padding:15px;
-    margin-bottom:12px;
-    box-shadow:0 2px 8px rgba(0,0,0,.08);
-}
-
-.loading{
-    text-align:center;
-    font-size:18px;
-    color:#666;
-}
-
-table{
-    width:100%;
-    border-collapse:collapse;
-    background:white;
-    border-radius:12px;
-    overflow:hidden;
-}
-
-th{
-    background:#1976d2;
-    color:white;
-    padding:12px;
-}
-
-td{
-    padding:10px;
-    border-bottom:1px solid #eee;
-}
-
-tr:hover{
-    background:#f8f9fa;
-}
-
-.search-box{
-    margin-bottom:15px;
-}
-
-.search-box input{
-    width:100%;
-    padding:12px;
-    border:1px solid #ddd;
-    border-radius:8px;
-    font-size:15px;
-}
+body { font-family:'Cairo',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
+.header { padding:16px 20px; text-align:center; border-bottom:1px solid var(--border); background:#0d0014; }
+.header h1 { font-size:17px; color:var(--accent2); font-weight:900; margin-top:4px; }
+.tabs { display:flex; margin:14px 16px; background:var(--card); border-radius:10px; padding:4px; gap:4px; }
+.tab { flex:1; padding:9px 4px; text-align:center; border-radius:8px; cursor:pointer; font-size:12px; font-family:'Cairo',sans-serif; border:none; background:transparent; color:var(--muted); font-weight:700; }
+.tab.active { background:linear-gradient(135deg,var(--accent),var(--accent2)); color:white; }
+.page { display:none; padding-bottom:30px; }
+.page.active { display:block; }
+.kpi-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:0 16px 16px; }
+.kpi-card { padding:14px 10px; text-align:center; border-radius:12px; background:var(--card); border:1px solid var(--border); position:relative; overflow:hidden; }
+.kpi-card::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; }
+.kpi-card.c1::before { background:var(--accent2); }
+.kpi-card.c2::before { background:var(--green); }
+.kpi-card.c3::before { background:var(--orange); }
+.kpi-icon { font-size:20px; margin-bottom:4px; }
+.kpi-num { font-size:26px; font-weight:900; }
+.kpi-card.c1 .kpi-num { color:var(--accent2); }
+.kpi-card.c2 .kpi-num { color:var(--green); }
+.kpi-card.c3 .kpi-num { color:var(--orange); }
+.kpi-label { font-size:11px; color:var(--muted); margin-top:3px; }
+.section-title { padding:0 16px; margin:16px 0 8px; font-size:13px; color:var(--accent2); font-weight:700; }
+.rank-row { display:flex; align-items:center; gap:10px; padding:10px 14px; background:var(--card); margin:6px 16px; border-radius:10px; border-right:3px solid var(--accent); cursor:pointer; }
+.rank-row:active { opacity:0.8; }
+.rank-num { font-size:18px; font-weight:900; color:var(--accent2); min-width:28px; }
+.rank-num.gold { color:#fbbf24; }
+.rank-num.silver { color:#94a3b8; }
+.rank-num.bronze { color:#d97706; }
+.rank-name { flex:1; font-size:13px; font-weight:600; }
+.rank-count { color:var(--accent2); font-weight:700; white-space:nowrap; font-size:13px; }
+.type-bars { margin:0 16px; }
+.type-bar-row { margin-bottom:10px; }
+.type-bar-top { display:flex; justify-content:space-between; margin-bottom:4px; }
+.type-bar-name { font-size:12px; }
+.type-bar-count { font-size:11px; color:var(--muted); }
+.type-bar-bg { background:var(--border); border-radius:6px; height:7px; overflow:hidden; }
+.type-bar-fill { height:100%; border-radius:6px; }
+.sort-bar { display:flex; gap:8px; padding:0 16px; margin:10px 0; overflow-x:auto; scrollbar-width:none; }
+.sort-bar::-webkit-scrollbar { display:none; }
+.sort-btn { background:var(--card); border:1px solid var(--border); border-radius:20px; padding:6px 14px; color:var(--muted); font-family:'Cairo',sans-serif; font-size:12px; cursor:pointer; white-space:nowrap; }
+.sort-btn.active { background:var(--accent2); border-color:var(--accent2); color:white; }
+.leader-card { display:flex; align-items:center; gap:10px; padding:12px 14px; background:var(--card); margin:6px 16px; border-radius:12px; border:1px solid var(--border); border-right:3px solid var(--accent); cursor:pointer; }
+.leader-card:active { opacity:0.8; }
+.l-avatar { width:38px; height:38px; border-radius:50%; background:linear-gradient(135deg,var(--accent),var(--accent2)); display:flex; align-items:center; justify-content:center; font-size:15px; font-weight:900; color:white; flex-shrink:0; }
+.l-info { flex:1; }
+.l-name { font-size:13px; font-weight:700; }
+.l-hrid { font-size:11px; color:var(--muted); }
+.lbadge { border-radius:20px; padding:3px 8px; font-size:11px; font-weight:700; }
+.lbadge.tot { background:rgba(212,0,168,0.15); color:var(--accent2); }
+.search-section { padding:16px 16px 8px; }
+.search-input { width:100%; padding:13px; border-radius:10px; border:1px solid var(--accent); background:var(--card); color:white; text-align:center; font-size:18px; font-family:'Cairo',sans-serif; outline:none; }
+.search-input:focus { border-color:var(--accent2); }
+.search-btn { margin-top:10px; width:100%; padding:12px; background:linear-gradient(135deg,var(--accent),var(--accent2)); border:none; color:white; font-size:16px; border-radius:10px; font-family:'Cairo',sans-serif; cursor:pointer; font-weight:700; }
+.profile-card { margin:14px 16px; padding:16px; background:var(--card); border-radius:12px; border:1px solid var(--accent); display:none; }
+.picker-name { font-size:17px; font-weight:700; margin-bottom:12px; text-align:center; color:var(--accent2); }
+.stats-row { display:grid; grid-template-columns:repeat(2,1fr); gap:8px; }
+.stat-box { padding:10px; text-align:center; border-radius:10px; background:#0f172a; }
+.stat-box .num { font-size:22px; font-weight:900; }
+.stat-box.t .num { color:var(--accent2); }
+.stat-box.c .num { color:var(--green); }
+.stat-box .lbl { font-size:10px; color:var(--muted); margin-top:2px; }
+.issue-row { display:flex; align-items:center; gap:10px; padding:10px 14px; background:#0f172a; margin:6px 16px; border-radius:10px; border-right:3px solid var(--accent); }
+.issue-info { flex:1; }
+.issue-detail { font-size:13px; font-weight:600; }
+.issue-meta { font-size:10px; color:var(--muted); margin-top:2px; }
+.issue-count { color:var(--accent2); font-weight:700; font-size:13px; }
+.error-msg { margin:0 16px; padding:12px; background:#1e0a0a; border:1px solid var(--red); border-radius:10px; color:var(--red); text-align:center; display:none; font-size:13px; }
+.issues-title { padding:0 16px; margin:12px 0 6px; font-size:13px; color:var(--accent2); font-weight:700; }
 </style>
 </head>
 <body>
 
-<div class="container">
-
-<h1>لوحة الشكاوى</h1>
-
-<div class="search-box">
-    <input type="text" id="search" placeholder="ابحث...">
+<div class="header">
+  <div style="font-size:28px">📦</div>
+  <h1>Picker Performance</h1>
 </div>
 
-<div id="loading" class="loading">
-    جاري تحميل البيانات...
+<div class="tabs">
+  <button class="tab active" onclick="showTab('dashboard',this)">📊 داشبورد</button>
+  <button class="tab" onclick="showTab('leaderboard',this)">🏆 ترتيب</button>
+  <button class="tab" onclick="showTab('search',this)">🔍 بحث</button>
 </div>
 
-<table id="table" style="display:none;">
-    <thead id="thead"></thead>
-    <tbody id="tbody"></tbody>
-</table>
+<!-- DASHBOARD -->
+<div id="page-dashboard" class="page active">
+  <div class="kpi-grid">
+    <div class="kpi-card c1"><div class="kpi-icon">🎫</div><div id="kTotal" class="kpi-num">0</div><div class="kpi-label">إجمالي الشكاوى</div></div>
+    <div class="kpi-card c2"><div class="kpi-icon">📋</div><div id="kTypes" class="kpi-num">0</div><div class="kpi-label">أنواع الشكاوى</div></div>
+    <div class="kpi-card c3" style="grid-column:span 2"><div class="kpi-icon">👥</div><div id="kPickers" class="kpi-num">0</div><div class="kpi-label">عدد البيكرز</div></div>
+  </div>
+  <div class="section-title">🏆 أكتر 5 بيكرز شكاوى</div>
+  <div id="top5"></div>
+  <div class="section-title">📦 أنواع الشكاوى</div>
+  <div class="type-bars" id="typeBars"></div>
+  <div class="section-title">⚠️ أكتر المشاكل تكراراً</div>
+  <div id="topDetails"></div>
+</div>
 
+<!-- LEADERBOARD -->
+<div id="page-leaderboard" class="page">
+  <div class="sort-bar">
+    <button class="sort-btn active" onclick="sortLead('total',this)">📊 الأعلى شكاوى</button>
+    <button class="sort-btn" onclick="sortLead('low',this)">🟢 الأقل شكاوى</button>
+  </div>
+  <div id="leaderList"></div>
+</div>
+
+<!-- SEARCH -->
+<div id="page-search" class="page">
+  <div class="search-section">
+    <input id="hridInput" class="search-input" type="number" inputmode="numeric" placeholder="ادخل HRID" onkeydown="if(event.key==='Enter')doSearch()">
+    <button class="search-btn" onclick="doSearch()">🔍 Search</button>
+  </div>
+  <div id="errorMsg" class="error-msg"></div>
+  <div id="profileCard" class="profile-card">
+    <div id="pickerName" class="picker-name"></div>
+    <div class="stats-row">
+      <div class="stat-box t"><div class="num" id="pTotal">0</div><div class="lbl">إجمالي الشكاوى</div></div>
+      <div class="stat-box c"><div class="num" id="pTypes">0</div><div class="lbl">أنواع مختلفة</div></div>
+    </div>
+  </div>
+  <div id="sectionTitle" class="issues-title" style="display:none">🔥 تفاصيل الشكاوى</div>
+  <div id="issuesList"></div>
 </div>
 
 <script>
+const DATA = {
+  51543: {name:"menna ali", complaints:[{"type":"missing item","detail":"missing item"},{"type":"missing item","detail":"missing item"},{"type":"missing item","detail":"missing item"},{"type":"missing item","detail":"missing item"},{"type":"missing items","detail":"missing items"}]},
+  42653: {name:"shehab yasser", complaints:[{"type":"missing item","detail":"missing item"}]},
+  52278: {name:"Iman Rehan", complaints:[{"type":"missing item","detail":"missing item"},{"type":"extra items","detail":"extra items"},{"type":"extra items","detail":"extra items"}]},
+  52516: {name:"Ayaat Ahmed", complaints:[{"type":"extra items","detail":"extra items"}]},
+  51955: {name:"mariam amr", complaints:[{"type":"extra items","detail":"extra items"}]},
+  51540: {name:"menna saeid", complaints:[{"type":"missing items","detail":"missing items"}]},
+  51765: {name:"Amira Abdelraouf", complaints:[{"type":"missing item","detail":"missing item"},{"type":"missing item","detail":"missing item"}]},
+  50807: {name:"Yossef Emad", complaints:[{"type":"missing item","detail":"missing item"}]},
+  44793: {name:"عصام محمد", complaints:[{"type":"missing items","detail":"missing items"},{"type":"missing items","detail":"missing items"}]},
+  51570: {name:"marawan abdelfatah", complaints:[{"type":"missing items","detail":"missing items"}]},
+  51318: {name:"رحمه رافت عبد الحميد", complaints:[{"type":"missing items","detail":"missing items"}]},
+  43902: {name:"Basem Moghazy", complaints:[{"type":"missing item","detail":"missing item"}]},
+  51542: {name:"Manon Mohamed", complaints:[{"type":"missing item","detail":"missing item"},{"type":"missing item","detail":"missing item"}]},
+  40438: {name:"Youssef Dawood", complaints:[{"type":"missing item","detail":"missing item"}]},
+  43903: {name:"mahmuod osama", complaints:[{"type":"missing item","detail":"missing item"}]},
+  41345: {name:"Mohamed Abdo", complaints:[{"type":"missing item","detail":"missing item"},{"type":"missing item","detail":"missing item"}]},
+  52958: {name:"Asmaa Ahmed", complaints:[{"type":"missing item","detail":"missing item"}]},
+  51954: {name:"رحمه محمد", complaints:[{"type":"missing items","detail":"missing items"}]}
+};
 
-const API_URL =
-"https://script.google.com/macros/s/AKfycbyQyw1uN7KZQ8L8BfQmdE450CpcypLfidBXFHmLKeensCaPlhhZtud7V8c4zItiQiw_YA/exec";
-
-let originalData = [];
-
-async function loadData(){
-
-    try{
-
-        const response = await fetch(API_URL);
-        const data = await response.json();
-
-        originalData = data;
-
-        if(!data.length){
-            document.getElementById("loading").innerHTML =
-            "لا توجد بيانات";
-            return;
-        }
-
-        renderTable(data);
-
-        document.getElementById("loading").style.display="none";
-        document.getElementById("table").style.display="table";
-
-    }catch(error){
-
-        document.getElementById("loading").innerHTML =
-        "حدث خطأ أثناء تحميل البيانات";
-
-        console.error(error);
-    }
-}
-
-function renderTable(data){
-
-    const headers = Object.keys(data[0]);
-
-    document.getElementById("thead").innerHTML =
-        `<tr>${headers.map(h=>`<th>${h}</th>`).join("")}</tr>`;
-
-    document.getElementById("tbody").innerHTML =
-        data.map(row=>`
-            <tr>
-                ${headers.map(h=>`<td>${row[h] ?? ""}</td>`).join("")}
-            </tr>
-        `).join("");
-}
-
-document.getElementById("search")
-.addEventListener("input",function(){
-
-    const keyword = this.value.toLowerCase();
-
-    const filtered = originalData.filter(row =>
-        Object.values(row).some(value =>
-            String(value).toLowerCase().includes(keyword)
-        )
-    );
-
-    renderTable(filtered.length ? filtered : originalData);
+// Pre-compute totals
+Object.entries(DATA).forEach(([h,p])=>{
+  p.total = p.complaints.length;
+  const types = {};
+  p.complaints.forEach(c=>{ types[c.type]=(types[c.type]||0)+1; });
+  p.typeCount = Object.keys(types).length;
+  p.typeCounts = types;
 });
 
-loadData();
+const typeColors = {'missing item':'#f59e0b','missing items':'#ef4444','extra items':'#3b82f6'};
+const typeIcons  = {'missing item':'📦','missing items':'📦','extra items':'➕'};
+const medals = ['🥇','🥈','🥉','4️⃣','5️⃣'];
+const medColors = ['#fbbf24','#94a3b8','#d97706','#d400a8','#d400a8'];
 
+function showTab(name, btn){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('page-'+name).classList.add('active');
+  if(name==='leaderboard') renderLeader('total');
+}
+
+function initDash(){
+  const pickers = Object.entries(DATA);
+  const totalComplaints = pickers.reduce((s,[,p])=>s+p.total,0);
+  const allTypes = new Set(pickers.flatMap(([,p])=>p.complaints.map(c=>c.type)));
+  document.getElementById('kTotal').textContent = totalComplaints;
+  document.getElementById('kTypes').textContent = allTypes.size;
+  document.getElementById('kPickers').textContent = pickers.length;
+
+  // Top 5
+  const sorted = [...pickers].sort((a,b)=>b[1].total-a[1].total).slice(0,5);
+  document.getElementById('top5').innerHTML = sorted.map(([h,p],i)=>`
+    <div class="rank-row" onclick="goSearch(${h})">
+      <div class="rank-num ${['gold','silver','bronze','',''][i]}" style="color:${medColors[i]}">${medals[i]}</div>
+      <div class="rank-name">${p.name}<br><small style="color:var(--muted);font-size:10px">HRID: ${h}</small></div>
+      <div class="rank-count">${p.total} شكوى</div>
+    </div>`).join('');
+
+  // Type bars
+  const types = {};
+  pickers.forEach(([,p])=>p.complaints.forEach(c=>{
+    types[c.type]=(types[c.type]||0)+1;
+  }));
+  const maxT = Math.max(...Object.values(types),1);
+  document.getElementById('typeBars').innerHTML = Object.entries(types).sort((a,b)=>b[1]-a[1]).map(([t,count])=>`
+    <div class="type-bar-row">
+      <div class="type-bar-top">
+        <span class="type-bar-name">${typeIcons[t]||'❓'} ${t}</span>
+        <span class="type-bar-count">${count}</span>
+      </div>
+      <div class="type-bar-bg"><div class="type-bar-fill" style="width:${(count/maxT*100).toFixed(0)}%;background:${typeColors[t]||'#b5008e'}"></div></div>
+    </div>`).join('');
+
+  // Top details
+  const details = {};
+  pickers.forEach(([,p])=>p.complaints.forEach(c=>{
+    const k = c.type+'||'+c.detail;
+    if(!details[k]) details[k]={type:c.type,detail:c.detail,count:0};
+    details[k].count++;
+  }));
+  document.getElementById('topDetails').innerHTML = Object.values(details).sort((a,b)=>b.count-a.count).map((d,i)=>`
+    <div class="rank-row" style="cursor:default">
+      <div class="rank-num">${i+1}</div>
+      <div class="rank-name">${typeIcons[d.type]||'❓'} ${d.detail}</div>
+      <div class="rank-count">${d.count}x</div>
+    </div>`).join('');
+}
+
+function renderLeader(by){
+  let sorted = Object.entries(DATA);
+  if(by==='total') sorted.sort((a,b)=>b[1].total-a[1].total);
+  else sorted.sort((a,b)=>a[1].total-b[1].total);
+  document.getElementById('leaderList').innerHTML = sorted.map(([h,p])=>`
+    <div class="leader-card" onclick="goSearch(${h})">
+      <div class="l-avatar">${(p.name||'?')[0].toUpperCase()}</div>
+      <div class="l-info"><div class="l-name">${p.name}</div><div class="l-hrid">HRID: ${h}</div></div>
+      <div class="lbadge tot">${p.total} شكوى</div>
+    </div>`).join('');
+}
+
+function sortLead(by,btn){
+  document.querySelectorAll('.sort-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderLeader(by);
+}
+
+function goSearch(hrid){
+  document.querySelectorAll('.tab').forEach((b,i)=>{b.classList.remove('active');if(i===2)b.classList.add('active');});
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-search').classList.add('active');
+  document.getElementById('hridInput').value=hrid;
+  doSearch();
+}
+
+function doSearch(){
+  const hrid = parseInt(document.getElementById('hridInput').value);
+  const errEl = document.getElementById('errorMsg');
+  const profEl = document.getElementById('profileCard');
+  const issTitle = document.getElementById('sectionTitle');
+  const issListEl = document.getElementById('issuesList');
+  errEl.style.display='none'; profEl.style.display='none';
+  issTitle.style.display='none'; issListEl.innerHTML='';
+  if(!hrid){errEl.innerText='من فضلك ادخل HRID';errEl.style.display='block';return;}
+  const pk = DATA[hrid];
+  if(!pk){errEl.innerText='❌ مفيش داتا لهذا الـ HRID';errEl.style.display='block';return;}
+  document.getElementById('pickerName').innerText = '👤 '+pk.name;
+  document.getElementById('pTotal').innerText = pk.total;
+  document.getElementById('pTypes').innerText = pk.typeCount;
+  profEl.style.display='block';
+  const counts = {};
+  pk.complaints.forEach(c=>{
+    const k = c.type+'||'+c.detail;
+    if(!counts[k]) counts[k]={type:c.type,detail:c.detail,count:0};
+    counts[k].count++;
+  });
+  const entries = Object.values(counts).sort((a,b)=>b.count-a.count);
+  if(entries.length){
+    issTitle.style.display='block';
+    issListEl.innerHTML = entries.map(c=>`
+      <div class="issue-row">
+        <div style="font-size:16px">${typeIcons[c.type]||'❓'}</div>
+        <div class="issue-info">
+          <div class="issue-detail">${c.detail}</div>
+          <div class="issue-meta">${c.type}</div>
+        </div>
+        <div class="issue-count">${c.count}x</div>
+      </div>`).join('');
+  }
+}
+
+initDash();
+renderLeader('total');
 </script>
-
 </body>
 </html>
